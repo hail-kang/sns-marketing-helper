@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extensionName__",
+  "version": "0.0.1",
+  "description": "__MSG_extensionDescription__",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "notifications",
+    "downloads",
+    "webRequest",
+    "declarativeNetRequest",
+    "scripting"
+  ],
+  "host_permissions": ["*://*.instagram.com/*"],
+  "action": {
+    "default_title": "Click to view a popup",
+    "default_popup": "index.html"
+  },
+  "default_locale": "ko",
+  "background": {
+    "service_worker": "background.mjs",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.instagram.com/*"],
+      "js": ["content.mjs"]
+    }
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  }
+}
