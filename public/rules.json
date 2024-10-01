@@ -1,0 +1,38 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "Cache-Control",
+          "operation": "set",
+          "value": "no-store"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "||instagram.com/graphql/query",
+      "resourceTypes": ["xmlhttprequest"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "Cache-Control",
+          "operation": "set",
+          "value": "no-store"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "||instagram.com/ajax/bootloader-endpoint/",
+      "resourceTypes": ["xmlhttprequest"]
+    }
+  }
+]

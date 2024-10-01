@@ -1,0 +1,22 @@
+{
+  "extensionName": {
+    "message": "내 확장 프로그램",
+    "description": "확장 프로그램의 이름"
+  },
+  "extensionDescription": {
+    "message": "Vue 3와 TypeScript로 만든 Chrome 확장 프로그램입니다.",
+    "description": "확장 프로그램의 설명"
+  },
+  "helloMessage": {
+    "message": "안녕하세요!",
+    "description": "루트 페이지 첫 인사"
+  },
+  "testButton": {
+    "message": "테스트실행",
+    "description": "테스트 버튼 텍스트"
+  },
+  "testMessage": {
+    "message": "테스트 입니다",
+    "description": "테스트 메시지"
+  }
+}

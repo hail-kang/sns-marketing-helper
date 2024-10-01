@@ -1,0 +1,22 @@
+{
+  "extensionName": {
+    "message": "My Extension",
+    "description": "Name of the extension"
+  },
+  "extensionDescription": {
+    "message": "A Chrome extension made with Vue 3 and TypeScript.",
+    "description": "Description of the extension"
+  },
+  "helloMessage": {
+    "message": "Hello World!",
+    "description": "First greeting on the root page"
+  },
+  "testButton": {
+    "message": "Run Test",
+    "description": "Test button text"
+  },
+  "testMessage": {
+    "message": "This is a test",
+    "description": "Test message"
+  }
+}
