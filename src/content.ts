@@ -1,25 +1,64 @@
 console.log("콘텐츠 스크립트가 로드되었습니다")
 
 import { storageManager } from "./module/storage"
-import { WatchingMediaData } from "./types/mediaData"
+import { WatchingMediaData, ShortcodeMedia } from "./types/mediaData"
+
+const getMediaUrls = (media: any): Array<string> | null => {
+  const mediaType = media["media_type"]
+  if (mediaType === 1) {
+    return [media["image_versions2"]["candidates"][0]["url"]]
+  } else if (mediaType === 2) {
+    return [media["video_versions"][0]["url"]]
+  } else if (mediaType === 8) {
+    return media["carousel_media"].flatMap(getMediaUrls)
+  }
+  return null
+}
 
 // 네트워크 요청 함수
-const fetchInstagramData = async (shortcode: string) => {
-  const endpoint = "https://www.instagram.com/graphql/query/"
-  const queryHash = "55a3c4bad29e4e20c20ff4cdfd80f5b4"
-  const variables = JSON.stringify({ shortcode })
-  const url = `${endpoint}?query_hash=${queryHash}&variables=${encodeURIComponent(variables)}`
+const fetchInstagramData = async (
+  shortcode: string,
+): Promise<ShortcodeMedia | null> => {
+  const endpoint = "https://www.instagram.com/graphql/query"
+  const variables = JSON.stringify({
+    shortcode,
+    __relay_internal__pv__PolarisFeedShareMenurelayprovider: false,
+    __relay_internal__pv__PolarisIsLoggedInrelayprovider: false,
+  })
+  const body = `av=17841451189947950&fb_api_caller_class=RelayModern&fb_api_req_friendly_name=PolarisPostRootQuery&variables=${encodeURIComponent(variables)}&server_timestamps=true&doc_id=9496392173716084`
 
   try {
-    const response = await fetch(url, { method: "GET" })
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        accept: "*/*",
+        "content-type": "application/x-www-form-urlencoded",
+        priority: "u=1, i",
+        "x-asbd-id": "129477",
+        "x-fb-friendly-name": "PolarisPostRootQuery",
+        "x-ig-app-id": "936619743392459",
+      },
+      referrer: "https://www.instagram.com/",
+      referrerPolicy: "strict-origin-when-cross-origin",
+      body,
+    })
     if (!response.ok) {
       throw new Error(`HTTP 오류! 상태: ${response.status}`)
     }
     const data = await response.json()
     console.log("인스타그램 데이터:", data)
-    return data
+    const media =
+      data["data"]["xdt_api__v1__media__shortcode__web_info"]["items"][0]
+    const mediaUrls = getMediaUrls(media)
+    return {
+      comments: media["comment_count"],
+      likes: media["like_count"],
+      views: media["view_count"],
+      mediaUrls,
+    }
   } catch (error) {
     console.error("데이터 가져오기 오류:", error)
+    return null
   }
 }
 
@@ -41,7 +80,8 @@ const handleSvgClick = async (element: Element, isReel: boolean = false) => {
       console.log("릴스 다운로드 로직 실행")
       console.log("추출된 릴스 shortcode:", shortcode)
       if (shortcode) {
-        await fetchInstagramData(shortcode)
+        const media = await fetchInstagramData(shortcode)
+        console.log("Media Data:", media)
       }
     } else {
       console.log("릴스 shortcode를 찾을 수 없습니다.")
@@ -55,7 +95,8 @@ const handleSvgClick = async (element: Element, isReel: boolean = false) => {
       const shortcode = extractShortcode(href)
       console.log("추출된 포스트 shortcode:", shortcode)
       if (shortcode) {
-        await fetchInstagramData(shortcode)
+        const media = await fetchInstagramData(shortcode)
+        console.log("Media Data:", media)
       }
     } else {
       console.log("포스트 링크를 찾을 수 없습니다.")
