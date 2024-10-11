@@ -1,6 +1,5 @@
 console.log("콘텐츠 스크립트가 로드되었습니다")
 
-import { v4 as uuidv4 } from "uuid"
 import { downloadUrls } from "./module/file"
 import { storageManager } from "./module/storage"
 import { WatchingMediaData, ShortcodeMedia } from "./types/mediaData"
