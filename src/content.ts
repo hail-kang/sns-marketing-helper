@@ -1,7 +1,7 @@
 console.log("콘텐츠 스크립트가 로드되었습니다")
 
 import { downloadUrls } from "./module/file"
-import { storageManager } from "./module/storage"
+import { StorageManager } from "./module/storage"
 import { MonitoredMedia, ShortcodeMedia } from "./types/mediaData"
 
 const getMediaUrls = (media: any): Array<string> | null => {
@@ -52,6 +52,7 @@ const fetchInstagramData = async (
       data["data"]["xdt_api__v1__media__shortcode__web_info"]["items"][0]
     const mediaUrls = getMediaUrls(media)
     return {
+      shortcode: media["code"],
       comments: media["comment_count"],
       likes: media["like_count"],
       views: media["view_count"],
@@ -149,6 +150,7 @@ const handleSvgClick = async (
 
 const handleMediaWatchingButtonClick = async (shortcode: string | null) => {
   console.log("미디어 추적 버튼이 클릭되었습니다.")
+  const storageManager = StorageManager.getInstance()
   if (shortcode) {
     const watchingMediaTransaction = storageManager.getTable("watchingMedia")
     const existingData = await watchingMediaTransaction.getItem(shortcode)
@@ -263,6 +265,7 @@ const createMediaWatchingButton = async (
     mediaWatchingButton.innerHTML = svgContent
   }
 
+  const storageManager = StorageManager.getInstance()
   const table = storageManager.getTable("watchingMedia")
   const exists = await table.existsItem(shortcode)
   await updateSvgContent(exists)
