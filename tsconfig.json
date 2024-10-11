@@ -12,7 +12,7 @@
     "paths": {
       "@/*": ["*"]
     },
-    "types": ["chrome"]
+    "types": ["chrome", "jszip", "uuid"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
   "exclude": ["node_modules"]
