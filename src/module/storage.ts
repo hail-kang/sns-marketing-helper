@@ -135,7 +135,7 @@ class StorageTransaction {
   }
 }
 
-class StorageManager {
+export class StorageManager {
   private static instance: StorageManager
   private transactions: { [key: string]: StorageTransaction } = {}
 
@@ -155,5 +155,3 @@ class StorageManager {
     return this.transactions[tableName]
   }
 }
-
-export const storageManager = StorageManager.getInstance()
