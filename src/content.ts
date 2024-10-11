@@ -152,12 +152,12 @@ const handleMediaWatchingButtonClick = async (shortcode: string | null) => {
   console.log("미디어 추적 버튼이 클릭되었습니다.")
   const storageManager = StorageManager.getInstance()
   if (shortcode) {
-    const watchingMediaTransaction = storageManager.getTable("watchingMedia")
-    const existingData = await watchingMediaTransaction.getItem(shortcode)
+    const monitoredMediaTransaction = storageManager.getTable("monitoredMedia")
+    const existingData = await monitoredMediaTransaction.getItem(shortcode)
 
     if (existingData) {
       // 데이터가 존재하면 제거
-      await watchingMediaTransaction.removeItem(shortcode)
+      await monitoredMediaTransaction.removeItem(shortcode)
       console.log("미디어 추적 데이터가 제거되었습니다.")
     } else {
       // 데이터가 없으면 추가
@@ -166,7 +166,7 @@ const handleMediaWatchingButtonClick = async (shortcode: string | null) => {
         createdAt: new Date(),
         lastCrawledAt: new Date(),
       }
-      await watchingMediaTransaction.setItem(shortcode, mediaData)
+      await monitoredMediaTransaction.setItem(shortcode, mediaData)
       console.log("미디어 추적 데이터가 추가되었습니다.")
     }
   } else {
@@ -266,13 +266,13 @@ const createMediaWatchingButton = async (
   }
 
   const storageManager = StorageManager.getInstance()
-  const table = storageManager.getTable("watchingMedia")
+  const table = storageManager.getTable("monitoredMedia")
   const exists = await table.existsItem(shortcode)
   await updateSvgContent(exists)
 
   chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === "local" && changes.watchingMedia) {
-      const newWatchingMedia = changes.watchingMedia.newValue
+    if (namespace === "local" && changes.monitoredMedia) {
+      const newWatchingMedia = changes.monitoredMedia.newValue
       const newExists = newWatchingMedia && newWatchingMedia[shortcode]
       updateSvgContent(newExists)
     }
