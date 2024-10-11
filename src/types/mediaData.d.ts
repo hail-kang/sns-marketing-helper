@@ -1,4 +1,4 @@
-export interface WatchingMediaData {
+export interface MonitoredMedia {
   shortcode: string
   createdAt: Timestamp
   lastCrawledAt: Timestamp

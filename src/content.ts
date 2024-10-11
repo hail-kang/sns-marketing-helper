@@ -2,7 +2,7 @@ console.log("콘텐츠 스크립트가 로드되었습니다")
 
 import { downloadUrls } from "./module/file"
 import { storageManager } from "./module/storage"
-import { WatchingMediaData, ShortcodeMedia } from "./types/mediaData"
+import { MonitoredMedia, ShortcodeMedia } from "./types/mediaData"
 
 const getMediaUrls = (media: any): Array<string> | null => {
   const mediaType = media["media_type"]
@@ -159,7 +159,7 @@ const handleMediaWatchingButtonClick = async (shortcode: string | null) => {
       console.log("미디어 추적 데이터가 제거되었습니다.")
     } else {
       // 데이터가 없으면 추가
-      const mediaData: WatchingMediaData = {
+      const mediaData: MonitoredMedia = {
         shortcode,
         createdAt: new Date(),
         lastCrawledAt: new Date(),

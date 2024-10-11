@@ -1,4 +1,4 @@
-import { WatchingMediaData } from "../types/mediaData"
+import { MonitoredMedia } from "../types/mediaData"
 
 class StorageTransaction {
   private tableName: string
@@ -103,8 +103,8 @@ class StorageTransaction {
 
   // 데이터를 필터링하는 함수
   async filter(
-    func: (data: WatchingMediaData) => boolean,
-  ): Promise<WatchingMediaData[]> {
+    func: (data: MonitoredMedia) => boolean,
+  ): Promise<MonitoredMedia[]> {
     while (this.lock) {
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
@@ -113,12 +113,12 @@ class StorageTransaction {
     try {
       const result = await chrome.storage.local.get([this.tableName])
       const table = result[this.tableName] || {}
-      const filteredData: WatchingMediaData[] = []
+      const filteredData: MonitoredMedia[] = []
 
       for (const key in table) {
         if (table.hasOwnProperty(key)) {
           const dataString = table[key]
-          const data: WatchingMediaData = JSON.parse(dataString)
+          const data: MonitoredMedia = JSON.parse(dataString)
           if (func(data)) {
             filteredData.push(data)
           }
