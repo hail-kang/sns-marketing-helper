@@ -1,5 +1,7 @@
 console.log("콘텐츠 스크립트가 로드되었습니다")
 
+import { v4 as uuidv4 } from "uuid"
+import { downloadUrls } from "./module/file"
 import { storageManager } from "./module/storage"
 import { WatchingMediaData, ShortcodeMedia } from "./types/mediaData"
 
@@ -18,7 +20,7 @@ const getMediaUrls = (media: any): Array<string> | null => {
 // 네트워크 요청 함수
 const fetchInstagramData = async (
   shortcode: string,
-): Promise<ShortcodeMedia | null> => {
+): Promise<ShortcodeMedia> => {
   const endpoint = "https://www.instagram.com/graphql/query"
   const variables = JSON.stringify({
     shortcode,
@@ -58,7 +60,7 @@ const fetchInstagramData = async (
     }
   } catch (error) {
     console.error("데이터 가져오기 오류:", error)
-    return null
+    throw error
   }
 }
 
@@ -72,35 +74,77 @@ const setVideoControls = (videoElement: HTMLVideoElement | null) => {
   }
 }
 
-const handleSvgClick = async (element: Element, isReel: boolean = false) => {
-  if (isReel) {
-    const match = window.location.href.match(/\/reels\/([^/]+)\//)
-    const shortcode = match ? match[1] : null
-    if (shortcode) {
-      console.log("릴스 다운로드 로직 실행")
-      console.log("추출된 릴스 shortcode:", shortcode)
+const handleSvgClick = async (
+  element: Element,
+  isReel: boolean = false,
+  svgContainer: HTMLDivElement,
+) => {
+  if (svgContainer.querySelector(".helper-spinner")) {
+    return
+  }
+  const bodyBackgroundColor = window.getComputedStyle(
+    document.body,
+  ).backgroundColor
+  const isBlackBackground = bodyBackgroundColor === "rgb(0, 0, 0)"
+  const strokeColor = isBlackBackground ? "#FFFFFF" : "#000000"
+
+  const originalSvgContent = svgContainer.innerHTML
+
+  const svgContent = `
+  <svg class="helper-spinner" width="24" height="24" style="${isReel ? "margin-top: -6px;" : ""}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 21C10.5316 20.9987 9.08574 20.6382 7.78865 19.9498C6.49156 19.2614 5.38261 18.2661 4.55853 17.0507C3.73446 15.8353 3.22029 14.4368 3.06088 12.977C2.90147 11.5172 3.10167 10.0407 3.644 8.67604C4.18634 7.31142 5.05434 6.10024 6.17229 5.14813C7.29024 4.19603 8.62417 3.53194 10.0577 3.21378C11.4913 2.89563 12.9809 2.93307 14.3967 3.32286C15.8124 3.71264 17.1113 4.44292 18.18 5.45C18.3205 5.59062 18.3993 5.78125 18.3993 5.98C18.3993 6.17875 18.3205 6.36937 18.18 6.51C18.1111 6.58075 18.0286 6.63699 17.9376 6.67539C17.8466 6.71378 17.7488 6.73357 17.65 6.73357C17.5512 6.73357 17.4534 6.71378 17.3624 6.67539C17.2714 6.63699 17.189 6.58075 17.12 6.51C15.8591 5.33065 14.2303 4.62177 12.508 4.5027C10.7856 4.38362 9.07478 4.86163 7.66357 5.85624C6.25237 6.85085 5.22695 8.30132 4.75995 9.96345C4.29296 11.6256 4.41292 13.3979 5.09962 14.9819C5.78633 16.5659 6.99785 17.865 8.53021 18.6604C10.0626 19.4558 11.8222 19.6989 13.5128 19.3488C15.2034 18.9987 16.7218 18.0768 17.8123 16.7383C18.9028 15.3998 19.4988 13.7265 19.5 12C19.5 11.8011 19.579 11.6103 19.7197 11.4697C19.8603 11.329 20.0511 11.25 20.25 11.25C20.4489 11.25 20.6397 11.329 20.7803 11.4697C20.921 11.6103 21 11.8011 21 12C21 14.3869 20.0518 16.6761 18.364 18.364C16.6761 20.0518 14.387 21 12 21Z" fill="${strokeColor}"/>
+  </svg>
+  `
+
+  svgContainer.innerHTML = svgContent
+  svgContainer.style.cursor = "default"
+  svgContainer.style.opacity = "0.7"
+
+  try {
+    if (isReel) {
+      const match = window.location.href.match(/\/reels\/([^/]+)\//)
+      const shortcode = match ? match[1] : null
       if (shortcode) {
-        const media = await fetchInstagramData(shortcode)
-        console.log("Media Data:", media)
+        console.log("릴스 다운로드 로직 실행")
+        console.log("추출된 릴스 shortcode:", shortcode)
+        if (shortcode) {
+          const media = await fetchInstagramData(shortcode)
+          console.log("Media Data:", media)
+          await downloadUrls({
+            urls: media.mediaUrls,
+            zipFileSuffix: "instagram",
+          })
+        }
+      } else {
+        console.log("릴스 shortcode를 찾을 수 없습니다.")
       }
     } else {
-      console.log("릴스 shortcode를 찾을 수 없습니다.")
-    }
-  } else {
-    const linkElement = element.querySelector(
-      'a[href^="/p/"][href$="/liked_by/"]',
-    )
-    if (linkElement) {
-      const href = linkElement.getAttribute("href")
-      const shortcode = extractShortcode(href)
-      console.log("추출된 포스트 shortcode:", shortcode)
-      if (shortcode) {
-        const media = await fetchInstagramData(shortcode)
-        console.log("Media Data:", media)
+      const linkElement = element.querySelector(
+        'a[href^="/p/"][href$="/liked_by/"]',
+      )
+      if (linkElement) {
+        const href = linkElement.getAttribute("href")
+        const shortcode = extractShortcode(href)
+        console.log("추출된 포스트 shortcode:", shortcode)
+        if (shortcode) {
+          const media = await fetchInstagramData(shortcode)
+          console.log("Media Data:", media)
+          await downloadUrls({
+            urls: media.mediaUrls,
+            zipFileSuffix: "instagram",
+          })
+        }
+      } else {
+        console.log("포스트 링크를 찾을 수 없습니다.")
       }
-    } else {
-      console.log("포스트 링크를 찾을 수 없습니다.")
     }
+  } catch (error) {
+    console.error("데이터 다운로드 오류:", error)
+    throw error
+  } finally {
+    svgContainer.innerHTML = originalSvgContent
+    svgContainer.style.cursor = "pointer"
+    svgContainer.style.opacity = "1"
   }
 }
 
@@ -167,11 +211,15 @@ const createSvgContainer = (isReel: boolean = false) => {
   svgContainer.innerHTML = svgContent
 
   svgContainer.addEventListener("mouseover", () => {
-    svgContainer.style.opacity = "0.7"
+    if (!svgContainer.querySelector(".helper-spinner")) {
+      svgContainer.style.opacity = "0.7"
+    }
   })
 
   svgContainer.addEventListener("mouseout", () => {
-    svgContainer.style.opacity = "1"
+    if (!svgContainer.querySelector(".helper-spinner")) {
+      svgContainer.style.opacity = "1"
+    }
   })
 
   return svgContainer
@@ -313,7 +361,9 @@ const addSvgToElement = async (element: Element, isReel: boolean = false) => {
   }
 
   const svgContainer = createSvgContainer(isReel)
-  svgContainer.addEventListener("click", () => handleSvgClick(element, isReel))
+  svgContainer.addEventListener("click", () =>
+    handleSvgClick(element, isReel, svgContainer),
+  )
 
   const mediaWatchingButton = await createMediaWatchingButton(isReel, shortcode)
 
