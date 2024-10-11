@@ -25,7 +25,8 @@
   "content_scripts": [
     {
       "matches": ["*://*.instagram.com/*"],
-      "js": ["content.mjs"]
+      "js": ["content.mjs"],
+      "css": ["snshelper.css"]
     }
   ],
   "declarative_net_request": {
