@@ -5,7 +5,6 @@ export default defineConfig({
   build: {
     lib: {
       entry: {
-        background: "src/background.ts",
         content: "src/content.ts",
       },
       formats: ["es"],
