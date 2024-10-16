@@ -1,68 +1,39 @@
 console.log("콘텐츠 스크립트가 로드되었습니다")
+import moment from "moment"
+import { downloadUrls } from "@/module/file"
+import {
+  TableName,
+  StorageKey,
+  addMonitoredMedia,
+  insertLog,
+  existsMonitoredMedia,
+  getMediaLogs,
+  removeMonitoredMedia,
+} from "@/module/storage"
+import { MediaLog, MonitoredMedia, ShortcodeMedia } from "@/types/mediaData"
+import { fetchInstagramData } from "@/module/crawl/instagram"
 
-import { downloadUrls } from "./module/file"
-import { StorageManager } from "./module/storage"
-import { MonitoredMedia, ShortcodeMedia } from "./types/mediaData"
-
-const getMediaUrls = (media: any): Array<string> | null => {
-  const mediaType = media["media_type"]
-  if (mediaType === 1) {
-    return [media["image_versions2"]["candidates"][0]["url"]]
-  } else if (mediaType === 2) {
-    return [media["video_versions"][0]["url"]]
-  } else if (mediaType === 8) {
-    return media["carousel_media"].flatMap(getMediaUrls)
-  }
-  return null
-}
-
-// 네트워크 요청 함수
-const fetchInstagramData = async (
-  shortcode: string,
-): Promise<ShortcodeMedia> => {
-  const endpoint = "https://www.instagram.com/graphql/query"
-  const variables = JSON.stringify({
-    shortcode,
-    __relay_internal__pv__PolarisFeedShareMenurelayprovider: false,
-    __relay_internal__pv__PolarisIsLoggedInrelayprovider: false,
-  })
-  const body = `av=17841451189947950&fb_api_caller_class=RelayModern&fb_api_req_friendly_name=PolarisPostRootQuery&variables=${encodeURIComponent(variables)}&server_timestamps=true&doc_id=9496392173716084`
-
-  try {
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        accept: "*/*",
-        "content-type": "application/x-www-form-urlencoded",
-        priority: "u=1, i",
-        "x-asbd-id": "129477",
-        "x-fb-friendly-name": "PolarisPostRootQuery",
-        "x-ig-app-id": "936619743392459",
-      },
-      referrer: "https://www.instagram.com/",
-      referrerPolicy: "strict-origin-when-cross-origin",
-      body,
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP 오류! 상태: ${response.status}`)
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  if (request.action === "crawling") {
+    const shortcode: string = request.shortcode
+    const mediaLogs = await getMediaLogs(shortcode)
+    const now = Date.now()
+    const date = moment(now).format("YYYY-MM-DD")
+    if (date in mediaLogs.logs) {
+      sendResponse({ state: "skip" })
+    } else {
+      const media = await fetchInstagramData(shortcode)
+      const mediaLog: MediaLog = {
+        comments: media.comments,
+        likes: media.likes,
+        views: media.views,
+        crawledAt: now,
+      }
+      await insertLog(mediaLogs, mediaLog)
+      sendResponse({ state: "success" })
     }
-    const data = await response.json()
-    console.log("인스타그램 데이터:", data)
-    const media =
-      data["data"]["xdt_api__v1__media__shortcode__web_info"]["items"][0]
-    const mediaUrls = getMediaUrls(media)
-    return {
-      shortcode: media["code"],
-      comments: media["comment_count"],
-      likes: media["like_count"],
-      views: media["view_count"],
-      mediaUrls,
-    }
-  } catch (error) {
-    console.error("데이터 가져오기 오류:", error)
-    throw error
   }
-}
+})
 
 const setVideoControls = (videoElement: HTMLVideoElement | null) => {
   if (videoElement) {
@@ -150,23 +121,16 @@ const handleSvgClick = async (
 
 const handleMediaWatchingButtonClick = async (shortcode: string | null) => {
   console.log("미디어 추적 버튼이 클릭되었습니다.")
-  const storageManager = StorageManager.getInstance()
   if (shortcode) {
-    const monitoredMediaTransaction = storageManager.getTable("monitoredMedia")
-    const existingData = await monitoredMediaTransaction.getItem(shortcode)
+    const existingData = await existsMonitoredMedia(shortcode)
 
     if (existingData) {
       // 데이터가 존재하면 제거
-      await monitoredMediaTransaction.removeItem(shortcode)
+      await removeMonitoredMedia(shortcode)
       console.log("미디어 추적 데이터가 제거되었습니다.")
     } else {
       // 데이터가 없으면 추가
-      const mediaData: MonitoredMedia = {
-        shortcode,
-        createdAt: new Date(),
-        lastCrawledAt: new Date(),
-      }
-      await monitoredMediaTransaction.setItem(shortcode, mediaData)
+      await addMonitoredMedia(shortcode)
       console.log("미디어 추적 데이터가 추가되었습니다.")
     }
   } else {
@@ -265,15 +229,17 @@ const createMediaWatchingButton = async (
     mediaWatchingButton.innerHTML = svgContent
   }
 
-  const storageManager = StorageManager.getInstance()
-  const table = storageManager.getTable("monitoredMedia")
-  const exists = await table.existsItem(shortcode)
+  const exists = await existsMonitoredMedia(shortcode)
   await updateSvgContent(exists)
 
   chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === "local" && changes.monitoredMedia) {
-      const newWatchingMedia = changes.monitoredMedia.newValue
-      const newExists = newWatchingMedia && newWatchingMedia[shortcode]
+    console.log(changes)
+    console.log(namespace)
+    if (
+      namespace === "local" &&
+      changes[StorageKey.MONITORED_MEDIA(shortcode)]
+    ) {
+      const newExists = changes[StorageKey.MONITORED_MEDIA(shortcode)].newValue
       updateSvgContent(newExists)
     }
   })

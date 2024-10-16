@@ -1,157 +1,102 @@
-import { MonitoredMedia } from "../types/mediaData"
+import moment from "moment"
+import { MonitoredMedia, MediaLogs, MediaLog } from "../types/mediaData"
 
-class StorageTransaction {
-  private tableName: string
-  private lock: boolean
+export enum TableName {
+  MONITORED_MEDIA = "monitoredMedia",
+  MEDIA_LOG = "mediaLog",
+}
 
-  constructor(tableName: string) {
-    this.tableName = tableName
-    this.lock = false
+export class StorageKey {
+  static MONITORED_MEDIA(shortcode: string) {
+    return `${TableName.MONITORED_MEDIA}:${shortcode}`
   }
 
-  // 데이터를 저장하는 함수
-  async setItem(key: string, data: any): Promise<void> {
-    while (this.lock) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-    this.lock = true
-
-    try {
-      const result = await chrome.storage.local.get([this.tableName])
-      const table = result[this.tableName] || {}
-      table[key] = JSON.stringify(data)
-
-      await chrome.storage.local.set({ [this.tableName]: table })
-      console.log(`데이터가 저장되었습니다. 키: ${key}`)
-    } catch (error) {
-      console.error(`데이터 저장 중 오류 발생: ${error}`)
-    } finally {
-      this.lock = false
-    }
-  }
-
-  // 데이터를 가져오는 함수
-  async getItem(key: string): Promise<any | null> {
-    while (this.lock) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-    this.lock = true
-
-    try {
-      const result = await chrome.storage.local.get([this.tableName])
-      const table = result[this.tableName] || {}
-      const dataString = table[key]
-
-      if (dataString) {
-        const data = JSON.parse(dataString)
-        return data
-      } else {
-        console.log(`키 ${key}에 대한 데이터를 찾을 수 없습니다.`)
-        return null
-      }
-    } catch (error) {
-      console.error(`데이터 가져오는 중 오류 발생: ${error}`)
-      return null
-    } finally {
-      this.lock = false
-    }
-  }
-
-  // 데이터를 삭제하는 함수
-  async removeItem(key: string): Promise<void> {
-    while (this.lock) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-    this.lock = true
-
-    try {
-      const result = await chrome.storage.local.get([this.tableName])
-      const table = result[this.tableName] || {}
-
-      if (key in table) {
-        delete table[key]
-        await chrome.storage.local.set({ [this.tableName]: table })
-        console.log(`키 ${key}에 대한 데이터가 삭제되었습니다.`)
-      } else {
-        console.log(`키 ${key}에 대한 데이터를 찾을 수 없습니다.`)
-      }
-    } catch (error) {
-      console.error(`데이터 삭제 중 오류 발생: ${error}`)
-    } finally {
-      this.lock = false
-    }
-  }
-
-  // 데이터가 존재하는지 확인하는 함수
-  async existsItem(key: string): Promise<boolean> {
-    while (this.lock) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-    this.lock = true
-
-    try {
-      const result = await chrome.storage.local.get([this.tableName])
-      const table = result[this.tableName] || {}
-      return key in table
-    } catch (error) {
-      console.error(`데이터 존재 여부 확인 중 오류 발생: ${error}`)
-      return false
-    } finally {
-      this.lock = false
-    }
-  }
-
-  // 데이터를 필터링하는 함수
-  async filter(
-    func: (data: MonitoredMedia) => boolean,
-  ): Promise<MonitoredMedia[]> {
-    while (this.lock) {
-      await new Promise((resolve) => setTimeout(resolve, 100))
-    }
-    this.lock = true
-
-    try {
-      const result = await chrome.storage.local.get([this.tableName])
-      const table = result[this.tableName] || {}
-      const filteredData: MonitoredMedia[] = []
-
-      for (const key in table) {
-        if (table.hasOwnProperty(key)) {
-          const dataString = table[key]
-          const data: MonitoredMedia = JSON.parse(dataString)
-          if (func(data)) {
-            filteredData.push(data)
-          }
-        }
-      }
-
-      return filteredData
-    } catch (error) {
-      console.error(`데이터 필터링 중 오류 발생: ${error}`)
-      return []
-    } finally {
-      this.lock = false
-    }
+  static MEDIA_LOG(shortcode: string) {
+    return `${TableName.MEDIA_LOG}:${shortcode}`
   }
 }
 
-export class StorageManager {
-  private static instance: StorageManager
-  private transactions: { [key: string]: StorageTransaction } = {}
+export async function getMonitoredMedia(shortcode: string) {
+  const key = StorageKey.MONITORED_MEDIA(shortcode)
+  const results = await chrome.storage.local.get([key])
+  const monitoredMedia: MonitoredMedia | null = results[key]
+  if (monitoredMedia == null) {
+    throw Error("Not exists MonitoredMedia")
+  }
+  return monitoredMedia
+}
 
-  private constructor() {}
+export async function filterMonitoredMediaList(
+  func: (item: MonitoredMedia) => boolean,
+  limit: number,
+) {
+  const results = await chrome.storage.local.get(null)
+  const keyExp = new RegExp(`${TableName.MONITORED_MEDIA}:.*`)
+  const items: MonitoredMedia[] = Object.entries(results)
+    .filter(([key]) => keyExp.test(key))
+    .map(([key, value]) => value)
+  return items
+    .filter(func)
+    .sort((a, b) => {
+      if (a.lastCrawledAt == null && b.lastCrawledAt == null) return 0
+      if (a.lastCrawledAt == null) return -1
+      if (b.lastCrawledAt == null) return 1
+      return b.lastCrawledAt - a.lastCrawledAt
+    })
+    .slice(0, limit)
+}
 
-  public static getInstance(): StorageManager {
-    if (!StorageManager.instance) {
-      StorageManager.instance = new StorageManager()
+export const existsMonitoredMedia = async (
+  shortcode: string,
+): Promise<boolean> => {
+  const key = StorageKey.MONITORED_MEDIA(shortcode)
+  const result = await chrome.storage.local.get([key])
+  return key in result
+}
+
+export const addMonitoredMedia = async (shortcode: string): Promise<void> => {
+  const monitoredMedia: MonitoredMedia = {
+    shortcode,
+    createdAt: Date.now(),
+    lastCrawledAt: null,
+  }
+  await chrome.storage.local.set({
+    [StorageKey.MONITORED_MEDIA(shortcode)]: monitoredMedia,
+  })
+}
+
+export async function getMediaLogs(shortcode: string): Promise<MediaLogs> {
+  const key = StorageKey.MEDIA_LOG(shortcode)
+  const results = await chrome.storage.local.get([key])
+  const mediaLogs: MediaLogs | null = results[key]
+  if (mediaLogs == null) {
+    return {
+      shortcode,
+      logs: {},
     }
-    return StorageManager.instance
+  }
+  return mediaLogs
+}
+
+export async function insertLog(mediaLogs: MediaLogs, mediaLog: MediaLog) {
+  const shortcode = mediaLogs.shortcode
+  const date = moment(mediaLog.crawledAt).format("YYYY-MM-DD")
+  if (!(date in mediaLogs.logs)) {
+    mediaLogs.logs[date] = mediaLog
   }
 
-  public getTable(tableName: string): StorageTransaction {
-    if (!this.transactions[tableName]) {
-      this.transactions[tableName] = new StorageTransaction(tableName)
-    }
-    return this.transactions[tableName]
-  }
+  const monitoredMedia = await getMonitoredMedia(shortcode)
+  monitoredMedia.lastCrawledAt = mediaLog.crawledAt
+
+  const monitorKey = StorageKey.MONITORED_MEDIA(shortcode)
+  const logKey = StorageKey.MEDIA_LOG(shortcode)
+  await chrome.storage.local.set({
+    [logKey]: mediaLogs,
+    [monitorKey]: monitoredMedia,
+  })
+}
+
+export const removeMonitoredMedia = async (shortcode: string) => {
+  const key = StorageKey.MONITORED_MEDIA(shortcode)
+  await chrome.storage.local.remove(key)
 }

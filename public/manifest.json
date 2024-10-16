@@ -5,12 +5,14 @@
   "description": "__MSG_extensionDescription__",
   "permissions": [
     "activeTab",
+    "tabs",
     "storage",
     "notifications",
     "downloads",
     "webRequest",
     "declarativeNetRequest",
-    "scripting"
+    "scripting",
+    "alarms"
   ],
   "host_permissions": ["*://*.instagram.com/*"],
   "action": {
