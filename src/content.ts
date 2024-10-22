@@ -1,5 +1,6 @@
 console.log("콘텐츠 스크립트가 로드되었습니다")
 import moment from "moment"
+import Chart from "chart.js/auto"
 import { downloadUrls } from "@/module/file"
 import {
   TableName,
@@ -400,6 +401,16 @@ const observer = new MutationObserver((mutations) => {
               }
             }
           }
+
+          // const seidebar = element.querySelector(
+          //   "html > body > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(2)",
+          // )
+          // if (seidebar != null && !seidebar.matches(".aGhJkLmN")) {
+          //   const newDiv = document.createElement("div")
+          //   newDiv.className = "aGhJkLmN"
+          //   newDiv.textContent = "hello"
+          //   seidebar.prepend(newDiv)
+          // }
         }
       }
     }
@@ -506,7 +517,6 @@ if (sectionContainer && sectionElement) {
   statisticModal.style.background = "black"
   statisticModal.style.width = `${sectionElement.offsetWidth}px`
   statisticModal.style.height = "100%" // 높이를 100%로 설정
-  statisticModal.style.opacity = "0.7" // 불투명도 0.7로 설정
   statisticModal.style.display = "none"
   sectionContainer.appendChild(statisticModal)
 
@@ -529,4 +539,36 @@ if (sectionContainer && sectionElement) {
     statisticModal.style.display = "none"
   })
   statisticModal.appendChild(closeButton)
+
+  const canvas = document.createElement("canvas")
+  canvas.width = 400
+  canvas.height = 400
+  canvas.id = "sns-helper-canvas"
+  statisticModal.appendChild(canvas)
+
+  const ctx = canvas.getContext("2d")
+  if (ctx) {
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+        datasets: [
+          {
+            label: "# of Votes",
+            data: [12, 19, 3, 5, 2, 3],
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    })
+  } else {
+    console.error("Canvas context를 가져올 수 없습니다.")
+  }
 }
