@@ -510,7 +510,6 @@ const sectionElement = sectionContainer?.querySelector("section")
 if (sectionContainer && sectionElement) {
   const statisticModal = document.createElement("div")
   statisticModal.id = "sns-helper-statistics"
-  statisticModal.textContent = "hello"
   statisticModal.style.position = "fixed"
   statisticModal.style.top = "0"
   statisticModal.style.left = sectionContainer.style.marginLeft
