@@ -12,7 +12,7 @@ import {
   removeMonitoredMedia,
 } from "@/module/storage"
 import { MediaLog, MonitoredMedia, ShortcodeMedia } from "@/types/mediaData"
-import { fetchInstagramData } from "@/module/crawl/instagram"
+import { fetchInstagramData } from "@/module/crawl"
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "crawling") {
