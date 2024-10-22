@@ -1,5 +1,6 @@
 console.log("콘텐츠 스크립트가 로드되었습니다")
 import moment from "moment"
+import Chart from "chart.js/auto"
 import { downloadUrls } from "@/module/file"
 import {
   TableName,
@@ -400,6 +401,16 @@ const observer = new MutationObserver((mutations) => {
               }
             }
           }
+
+          // const seidebar = element.querySelector(
+          //   "html > body > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(2)",
+          // )
+          // if (seidebar != null && !seidebar.matches(".aGhJkLmN")) {
+          //   const newDiv = document.createElement("div")
+          //   newDiv.className = "aGhJkLmN"
+          //   newDiv.textContent = "hello"
+          //   seidebar.prepend(newDiv)
+          // }
         }
       }
     }
@@ -443,3 +454,120 @@ if (isReelsPage(currentUrl)) {
 observer.observe(document.body, { childList: true, subtree: true })
 
 console.log("DOM 변경 관찰이 시작되었습니다.")
+
+const targetElement = document.querySelector(
+  "html > body > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div > div > div > div > div:nth-of-type(2)",
+)
+if (targetElement && targetElement.firstElementChild) {
+  const firstElement = targetElement.firstElementChild.cloneNode(
+    true,
+  ) as Element
+  const buttonElement = firstElement.querySelector("div > span > div > a")
+  if (buttonElement) {
+    buttonElement.setAttribute("href", "#")
+    buttonElement.addEventListener("click", () => {
+      console.log("hello world")
+      const statisticModal = document.querySelector(
+        "#sns-helper-statistics",
+      ) as HTMLElement
+      statisticModal.style.display = "block"
+    })
+  }
+
+  const svgContainer = buttonElement?.querySelector("svg")?.parentElement
+  if (svgContainer) {
+    const bodyBackgroundColor = window.getComputedStyle(
+      document.body,
+    ).backgroundColor
+    const isBlackBackground = bodyBackgroundColor === "rgb(0, 0, 0)"
+    const strokeColor = isBlackBackground ? "#FFFFFF" : "#000000"
+    svgContainer.innerHTML = `
+    <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+      <path d="M4.5 20.25C4.30189 20.2474 4.11263 20.1676 3.97253 20.0275C3.83244 19.8874 3.75259 19.6981 3.75 19.5V4.5C3.75 4.30109 3.82902 4.11032 3.96967 3.96967C4.11032 3.82902 4.30109 3.75 4.5 3.75C4.69891 3.75 4.88968 3.82902 5.03033 3.96967C5.17098 4.11032 5.25 4.30109 5.25 4.5V19.5C5.24741 19.6981 5.16756 19.8874 5.02747 20.0275C4.88737 20.1676 4.69811 20.2474 4.5 20.25Z" />
+      <path d="M19.5 20.25H4.5C4.30109 20.25 4.11032 20.171 3.96967 20.0303C3.82902 19.8897 3.75 19.6989 3.75 19.5C3.75 19.3011 3.82902 19.1103 3.96967 18.9697C4.11032 18.829 4.30109 18.75 4.5 18.75H19.5C19.6989 18.75 19.8897 18.829 20.0303 18.9697C20.171 19.1103 20.25 19.3011 20.25 19.5C20.25 19.6989 20.171 19.8897 20.0303 20.0303C19.8897 20.171 19.6989 20.25 19.5 20.25Z" />
+      <path d="M8 16.75C7.80189 16.7474 7.61263 16.6676 7.47253 16.5275C7.33244 16.3874 7.25259 16.1981 7.25 16V12C7.25 11.8011 7.32902 11.6103 7.46967 11.4697C7.61032 11.329 7.80109 11.25 8 11.25C8.19891 11.25 8.38968 11.329 8.53033 11.4697C8.67098 11.6103 8.75 11.8011 8.75 12V16C8.74741 16.1981 8.66756 16.3874 8.52747 16.5275C8.38737 16.6676 8.19811 16.7474 8 16.75Z" />
+      <path d="M11.5 16.75C11.3019 16.7474 11.1126 16.6676 10.9725 16.5275C10.8324 16.3874 10.7526 16.1981 10.75 16V8C10.75 7.80109 10.829 7.61032 10.9697 7.46967C11.1103 7.329 11.3011 7.25 11.5 7.25C11.6989 7.25 11.8897 7.329 12.0303 7.46967C12.171 7.61032 12.25 7.80109 12.25 8V16C12.2474 16.1981 12.1676 16.3874 12.0275 16.5275C11.8874 16.6676 11.6981 16.7474 11.5 16.75Z" />
+      <path d="M15 16.75C14.8019 16.7474 14.6126 16.6676 14.4725 16.5275C14.3324 16.3874 14.2526 16.1981 14.25 16V12C14.25 11.8011 14.329 11.6103 14.4697 11.4697C14.6103 11.329 14.8011 11.25 15 11.25C15.1989 11.25 15.3897 11.329 15.5303 11.4697C15.671 11.6103 15.75 11.8011 15.75 12V16C15.7474 16.1981 15.6676 16.3874 15.5275 16.5275C15.3874 16.6676 15.1981 16.7474 15 16.75Z" />
+      <path d="M18.5 16.75C18.3019 16.7474 18.1126 16.6676 17.9725 16.5275C17.8324 16.3874 17.7526 16.1981 17.75 16V8C17.75 7.80109 17.829 7.61032 17.9697 7.46967C18.1103 7.32902 18.3011 7.25 18.5 7.25C18.6989 7.25 18.8897 7.32902 19.0303 7.46967C19.171 7.61032 19.25 7.80109 19.25 8V16C19.2474 16.1981 19.1676 16.3874 19.0275 16.5275C18.8874 16.6676 18.6981 16.7474 18.5 16.75Z" fill="${strokeColor}"/>
+    </svg>`
+  }
+
+  const textElement = buttonElement?.querySelector(
+    "div > div:nth-of-type(2) > div > div > span > span",
+  ) as HTMLElement // 타입 단언 추가
+  if (textElement) {
+    textElement.textContent = "통계"
+    textElement.style.fontWeight = "400"
+  }
+
+  targetElement.prepend(firstElement)
+}
+
+const sectionContainer = document.querySelector(
+  "html > body > div:nth-of-type(2) > div > div > div > div:nth-of-type(2) > div > div > div:first-of-type > div:first-of-type > div:first-of-type",
+) as HTMLElement
+const sectionElement = sectionContainer?.querySelector("section")
+if (sectionContainer && sectionElement) {
+  const statisticModal = document.createElement("div")
+  statisticModal.id = "sns-helper-statistics"
+  statisticModal.style.position = "fixed"
+  statisticModal.style.top = "0"
+  statisticModal.style.left = sectionContainer.style.marginLeft
+  statisticModal.style.background = "black"
+  statisticModal.style.width = `${sectionElement.offsetWidth}px`
+  statisticModal.style.height = "100%" // 높이를 100%로 설정
+  statisticModal.style.display = "none"
+  sectionContainer.appendChild(statisticModal)
+
+  const bodyBackgroundColor = window.getComputedStyle(
+    document.body,
+  ).backgroundColor
+  const isBlackBackground = bodyBackgroundColor === "rgb(0, 0, 0)"
+  const strokeColor = isBlackBackground ? "#FFFFFF" : "#000000"
+
+  const closeButton = document.createElement("div")
+  closeButton.innerHTML = `
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M13.06 12L17.48 7.57996C17.5537 7.5113 17.6128 7.4285 17.6538 7.3365C17.6948 7.2445 17.7168 7.14518 17.7186 7.04448C17.7204 6.94378 17.7018 6.84375 17.6641 6.75036C17.6264 6.65697 17.5703 6.57214 17.499 6.50092C17.4278 6.4297 17.343 6.37356 17.2496 6.33584C17.1562 6.29811 17.0562 6.27959 16.9555 6.28137C16.8548 6.28314 16.7555 6.30519 16.6635 6.34618C16.5715 6.38717 16.4887 6.44627 16.42 6.51996L12 10.94L7.58 6.51996C7.43782 6.38748 7.24978 6.31535 7.05548 6.31878C6.86118 6.32221 6.67579 6.40092 6.53838 6.53834C6.40096 6.67575 6.32225 6.86113 6.31882 7.05544C6.3154 7.24974 6.38752 7.43778 6.52 7.57996L10.94 12L6.52 16.42C6.37955 16.5606 6.30066 16.7512 6.30066 16.95C6.30066 17.1487 6.37955 17.3393 6.52 17.48C6.66062 17.6204 6.85125 17.6993 7.05 17.6993C7.24875 17.6993 7.43937 17.6204 7.58 17.48L12 13.06L16.42 17.48C16.5606 17.6204 16.7512 17.6993 16.95 17.6993C17.1488 17.6993 17.3394 17.6204 17.48 17.48C17.6204 17.3393 17.6993 17.1487 17.6993 16.95C17.6993 16.7512 17.6204 16.5606 17.48 16.42L13.06 12Z" fill="${strokeColor}"/>
+  </svg>`
+  closeButton.style.position = "absolute"
+  closeButton.style.top = "10px"
+  closeButton.style.right = "10px"
+  closeButton.style.cursor = "pointer"
+  closeButton.addEventListener("click", () => {
+    statisticModal.style.display = "none"
+  })
+  statisticModal.appendChild(closeButton)
+
+  const canvas = document.createElement("canvas")
+  canvas.width = 400
+  canvas.height = 400
+  canvas.id = "sns-helper-canvas"
+  statisticModal.appendChild(canvas)
+
+  const ctx = canvas.getContext("2d")
+  if (ctx) {
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+        datasets: [
+          {
+            label: "# of Votes",
+            data: [12, 19, 3, 5, 2, 3],
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    })
+  } else {
+    console.error("Canvas context를 가져올 수 없습니다.")
+  }
+}
